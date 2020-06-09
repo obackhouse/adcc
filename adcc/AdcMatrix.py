@@ -25,6 +25,7 @@ import numpy as np
 from .LazyMp import LazyMp
 from .AdcMethod import AdcMethod
 from .functions import empty_like
+from .AdcMatrixPython import AdcMatrixPython
 from .AmplitudeVector import AmplitudeVector
 
 import libadcc
@@ -291,7 +292,7 @@ for prop in ["reference_state", "ground_state", "mospaces",
 
 
 class AdcMatrix(AdcMatrixlike):
-    def __init__(self, method, hf_or_mp):
+    def __init__(self, method, hf_or_mp, python=False, block_orders=None):
         """
         Initialise an ADC matrix.
 
@@ -313,8 +314,11 @@ class AdcMatrix(AdcMatrixlike):
                             "HartreeFockSolution_i.")
 
         self.method = method
-        self.cppmat = libadcc.AdcMatrix(method.name, hf_or_mp)
-        super().__init__(self.cppmat)
+        if python:
+            super().__init__(AdcMatrixPython(method, hf_or_mp, block_orders))
+        else:
+            super().__init__(libadcc.AdcMatrix(method.name, hf_or_mp))
+        self.python = python
 
     def compute_matvec(self, in_ampl, out_ampl=None):
         """
@@ -325,17 +329,24 @@ class AdcMatrix(AdcMatrixlike):
         """
         if not isinstance(in_ampl, AmplitudeVector):
             raise TypeError("in_ampl has to be of type AmplitudeVector.")
-        if out_ampl is None:
-            out_ampl = empty_like(in_ampl)
-        if not isinstance(out_ampl, AmplitudeVector):
-            raise TypeError("out_ampl has to be of type AmplitudeVector.")
-        self.cppmat.compute_matvec(in_ampl.to_cpp(), out_ampl.to_cpp())
-        return out_ampl
+
+        if self.python:
+            return self.innermatrix.compute_matvec(in_ampl)
+        else:
+            if out_ampl is None:
+                out_ampl = empty_like(in_ampl)
+            if not isinstance(out_ampl, AmplitudeVector):
+                raise TypeError("out_ampl has to be of type AmplitudeVector.")
+            self.innermatrix.compute_matvec(in_ampl.to_cpp(), out_ampl.to_cpp())
+            return out_ampl
 
     def to_cpp(self):
         # TODO Notice: This is only needed for guess.py and can probably
         #      be removed once the guesses are done pyside.
-        return self.cppmat
+        if self.python:
+            return self.innermatrix.to_cpp()
+        else:
+            return self.innermatrix
 
     def __repr__(self):
         return f"AdcMatrix({self.method.name})"
