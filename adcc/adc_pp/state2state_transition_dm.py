@@ -130,6 +130,7 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
 DISPATCH = {"adc0": s2s_tdm_adc0,
             "adc1": s2s_tdm_adc0,       # same as ADC(0)
             "adc2": s2s_tdm_adc2,
+            "adc2x": s2s_tdm_adc2,
             "adc3": s2s_tdm_adc2,
             }
 

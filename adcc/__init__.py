@@ -34,6 +34,7 @@ from .functions import (contract, copy, direct_sum, dot, einsum, empty_like,
 from .memory_pool import memory_pool
 from .AdcBlockView import AdcBlockView
 from .ExcitedStates import ExcitedStates
+from .ElectronicTransition import State2StateTransition
 from .DataHfProvider import DataHfProvider, DictHfProvider
 from .ReferenceState import ReferenceState
 from .caching_policy import DefaultCachingPolicy, GatherStatisticsPolicy
