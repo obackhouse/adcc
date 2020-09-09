@@ -20,8 +20,6 @@
 ## along with adcc. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from math import sqrt
-
 from adcc import block as b
 from adcc.AdcMethod import AdcMethod
 from adcc.functions import einsum
@@ -34,7 +32,7 @@ import libadcc
 def s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates):
     x1 = amplitude_l["s"]
     y1 = amplitude_r["s"]
-    
+
     dm = OneParticleOperator(mp, is_symmetric=False)
     dm[b.oo] = -einsum('ja,ia->ij', x1, y1)
     dm[b.vv] = einsum('ia,ib->ab', x1, y1)
@@ -43,22 +41,22 @@ def s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates):
 
 def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
     dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
-    
+
     x1 = amplitude_l["s"]
     y1 = amplitude_r["s"]
     x2 = amplitude_l["d"]
     y2 = amplitude_r["d"]
-    
+
     t2 = mp.t2(b.oovv)
     p0_ov = mp.mp2_diffdm[b.ov]
     p0_oo = mp.mp2_diffdm[b.oo]
     p0_vv = mp.mp2_diffdm[b.vv]
     p1_oo = dm[b.oo].evaluate()  # ADC(1) tdm
     p1_vv = dm[b.vv].evaluate()  # ADC(1) tdm
-    
+
     rx1 = einsum('ijab,jb->ia', t2, x1)
     ry1 = einsum('ijab,jb->ia', t2, y1)
-    
+
     dm[b.oo] = (
         p1_oo - 2.0 * einsum('ikab,jkab->ij', y2, x2) + (
             + 0.5 * (
@@ -67,7 +65,8 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
             )
             - einsum(
                 'ikcd,jkcd->ij', t2,
-                einsum('lk,jlcd->jkcd', 0.5 * p1_oo, t2) - einsum('jkcb,db->jkcd', t2, p1_vv)
+                einsum('lk,jlcd->jkcd', 0.5 * p1_oo, t2)
+                - einsum('jkcb,db->jkcd', t2, p1_vv)
             )
             - 0.5 * (
                 einsum('ia,ja->ij', y1, einsum('jkac,kc->ja', t2, rx1))
@@ -98,10 +97,10 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
             + einsum("ia,ib->ab", ry1, rx1)
         ).symmetrise()
     )
-    
+
     p1_ov = -2.0 * einsum("jb,ijab->ia", x1, y2)
     p1_vo = -2.0 * einsum("ijab,jb->ai", x2, y1)
-    
+
     dm[b.ov] = (
         p1_ov
         - einsum("ijab,bj->ia", t2, p1_vo)
