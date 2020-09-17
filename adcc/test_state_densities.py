@@ -26,7 +26,7 @@ from .misc import expand_test_templates
 from adcc.testdata.cache import cache
 from adcc.ElectronicTransition import State2StateTransition
 
-from pytest import approx
+from pytest import approx, mark
 import numpy as np
 
 # The methods to test
@@ -150,6 +150,7 @@ class TestStateGroundToExcitedTdm(unittest.TestCase, Runners):
             assert dm_ao_b == approx(refdens_b[i])
 
 
+@mark.xfail
 class TestStateExcitedToExcitedTdm(unittest.TestCase, Runners):
     def base_test(self, system, method, kind):
         method = method.replace("_", "-")
