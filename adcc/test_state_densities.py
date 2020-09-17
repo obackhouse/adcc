@@ -166,10 +166,10 @@ class TestStateExcitedToExcitedTdm(unittest.TestCase, Runners):
             # TODO: I (MS) have no idea how the densities in the ctx are sorted...
             fromi_ref_a = state_to_state[f"from_{i}"]["state_to_excited_tdm_bb_a"]
             fromi_ref_b = state_to_state[f"from_{i}"]["state_to_excited_tdm_bb_b"]
-            tdms = State2StateTransition(state, initial=i, final=None).transition_dm
-            for j, tdm in enumerate(tdms):
+            for ii, j in enumerate(range(i + 1, state.size)):
+                tdm = State2StateTransition(state, initial=i, final=j).transition_dm[0]
                 dm_ao_a, dm_ao_b = tdm.to_ao_basis()
                 dm_ao_a = dm_ao_a.to_ndarray()
                 dm_ao_b = dm_ao_b.to_ndarray()
-                np.testing.assert_allclose(dm_ao_a, fromi_ref_a[j])
-                np.testing.assert_allclose(dm_ao_b, fromi_ref_b[j])
+                np.testing.assert_allclose(dm_ao_a, fromi_ref_a[ii])
+                np.testing.assert_allclose(dm_ao_b, fromi_ref_b[ii])
