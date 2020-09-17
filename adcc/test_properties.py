@@ -83,6 +83,7 @@ class TestStateDipoleMoments(unittest.TestCase, Runners):
         n_ref = len(state.excitation_vector)
         assert_allclose(res_dms, ref["state_dipole_moments"][:n_ref], atol=1e-4)
 
+
 class TestState2StateTransitionDipoleMoments(unittest.TestCase, Runners):
     def base_test(self, system, method, kind):
         method = method.replace("_", "-")
@@ -98,5 +99,7 @@ class TestState2StateTransitionDipoleMoments(unittest.TestCase, Runners):
             assert exci.excitation_energy == refevals[i]
             fromi_ref = state_to_state[f"from_{i}"]["transition_dipole_moments"]
             for ii, j in enumerate(range(i + 1, state.size)):
-                tdipmom = State2StateTransition(state, initial=i, final=j).transition_dipole_moment
+                tdipmom = State2StateTransition(
+                    state, initial=i, final=j
+                ).transition_dipole_moment
                 assert_allclose_signfix(tdipmom[0], fromi_ref[ii], atol=1e-4)

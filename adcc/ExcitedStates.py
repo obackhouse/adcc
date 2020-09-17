@@ -30,18 +30,16 @@ from .timings import Timer, timed_member_call
 from .AdcMethod import AdcMethod
 from .FormatIndex import (FormatIndexAdcc, FormatIndexBase,
                           FormatIndexHfProvider, FormatIndexHomoLumo)
-from .visualisation import ExcitationSpectrum
 from .OneParticleOperator import product_trace
 from .FormatDominantElements import FormatDominantElements
 
 from adcc import dot
 
 from scipy import constants
-from matplotlib import pyplot as plt
 from .solver.SolverStateBase import EigenSolverStateBase
 from .Excitation import Excitation, mark_excitation_property
 
-from .ElectronicTransition import ElectronicTransition, State2StateTransition
+from .ElectronicTransition import ElectronicTransition
 
 
 class FormatExcitationVector:
@@ -259,7 +257,7 @@ class ExcitedStates(ElectronicTransition):
         ret.attach(self._property_timer, subtree="properties")
         ret.time_construction = self.reference_state.timer.time_construction
         return ret
-    
+
     @property
     def property_method(self):
         """The method used to evaluate ADC properties"""
@@ -282,7 +280,7 @@ class ExcitedStates(ElectronicTransition):
     def excitation_vector(self):
         """List of excitation vectors"""
         return self.__excitation_vector
-    
+
     @cached_property
     @mark_excitation_property(transform_to_ao=True)
     @timed_member_call(timer="_property_timer")
@@ -291,7 +289,7 @@ class ExcitedStates(ElectronicTransition):
         return [adc_pp.transition_dm(self.property_method, self.ground_state,
                                      evec, self.matrix.intermediates)
                 for evec in self.excitation_vector]
-    
+
     @cached_property
     @mark_excitation_property(transform_to_ao=True)
     @timed_member_call(timer="_property_timer")

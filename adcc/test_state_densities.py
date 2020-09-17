@@ -168,7 +168,9 @@ class TestStateExcitedToExcitedTdm(unittest.TestCase, Runners):
             fromi_ref_a = state_to_state[f"from_{i}"]["state_to_excited_tdm_bb_a"]
             fromi_ref_b = state_to_state[f"from_{i}"]["state_to_excited_tdm_bb_b"]
             for ii, j in enumerate(range(i + 1, state.size)):
-                tdm = State2StateTransition(state, initial=i, final=j).transition_dm[0]
+                tdm = State2StateTransition(
+                    state, initial=i, final=j
+                ).transition_dm[0]
                 dm_ao_a, dm_ao_b = tdm.to_ao_basis()
                 dm_ao_a = dm_ao_a.to_ndarray()
                 dm_ao_b = dm_ao_b.to_ndarray()

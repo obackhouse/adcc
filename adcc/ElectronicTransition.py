@@ -25,20 +25,14 @@ import numpy as np
 
 from . import adc_pp
 from .misc import cached_property
-from .timings import Timer, timed_member_call
-from .AdcMethod import AdcMethod
-from .FormatIndex import (FormatIndexAdcc, FormatIndexBase,
-                          FormatIndexHfProvider, FormatIndexHomoLumo)
+from .timings import timed_member_call
 from .visualisation import ExcitationSpectrum
 from .OneParticleOperator import product_trace
-from .FormatDominantElements import FormatDominantElements
-
-from adcc import dot
 
 from scipy import constants
 from matplotlib import pyplot as plt
-from .solver.SolverStateBase import EigenSolverStateBase
-from .Excitation import Excitation, mark_excitation_property
+from .Excitation import mark_excitation_property
+
 
 class ElectronicTransition:
     """
@@ -232,13 +226,15 @@ class State2StateTransition(ElectronicTransition):
         self.initial = initial
         self.final = final
 
-        self.initial_excitation_vector = self.parent_state.excitation_vector[self.initial]
+        self.initial_excitation_vector = \
+            self.parent_state.excitation_vector[self.initial]
         if self.final is None:
             other_excitation_energy = np.delete(
                 self.parent_state.excitation_energy.copy(), self.initial
             )
         else:
-            other_excitation_energy = np.array([self.parent_state.excitation_energy[self.final]])
+            other_excitation_energy = \
+                np.array([self.parent_state.excitation_energy[self.final]])
         self.excitation_energy = other_excitation_energy -\
             self.parent_state.excitation_energy[self.initial]
     # TODO: describe?!
@@ -247,14 +243,27 @@ class State2StateTransition(ElectronicTransition):
     @mark_excitation_property(transform_to_ao=True)
     @timed_member_call(timer="_property_timer")
     def transition_dm(self):
-        """List of transition density matrices from initial state to final state/s"""
+        """
+        List of transition density matrices from
+        initial state to final state/s
+        """
+        # TODO: only states above self.initial
         if self.final is None:
-            return [adc_pp.state2state_transition_dm(self.property_method, self.ground_state,
-                                                    self.initial_excitation_vector, evec,
-                                                    self.matrix.intermediates)
-                    for i, evec in enumerate(self.parent_state.excitation_vector) if i != self.initial]
+            return [
+                adc_pp.state2state_transition_dm(self.property_method,
+                                                 self.ground_state,
+                                                 self.initial_excitation_vector,
+                                                 evec,
+                                                 self.matrix.intermediates)
+                for i, evec in enumerate(self.parent_state.excitation_vector)
+                if i != self.initial
+            ]
         else:
-            return [adc_pp.state2state_transition_dm(self.property_method, self.ground_state,
-                                                    self.initial_excitation_vector,
-                                                    self.parent_state.excitation_vector[self.final],
-                                                    self.matrix.intermediates)]
+            final_vec = self.parent_state.excitation_vector[self.final]
+            return [
+                adc_pp.state2state_transition_dm(self.property_method,
+                                                 self.ground_state,
+                                                 self.initial_excitation_vector,
+                                                 final_vec,
+                                                 self.matrix.intermediates)
+            ]
