@@ -23,12 +23,13 @@
 import unittest
 import numpy as np
 
+from numpy.testing import assert_allclose
+
+from adcc import State2StateTransition
+from adcc.testdata.cache import cache
+
 from .misc import assert_allclose_signfix
 from .test_state_densities import Runners
-
-from numpy.testing import assert_allclose
-from adcc.testdata.cache import cache
-from adcc import State2StateTransition
 
 from pytest import approx, skip
 
@@ -99,7 +100,10 @@ class TestState2StateTransitionDipoleMoments(unittest.TestCase, Runners):
             assert exci.excitation_energy == refevals[i]
             fromi_ref = state_to_state[f"from_{i}"]["transition_dipole_moments"]
             for ii, j in enumerate(range(i + 1, state.size)):
-                tdipmom = State2StateTransition(
-                    state, initial=i, final=j
-                ).transition_dipole_moment
-                assert_allclose_signfix(tdipmom[0], fromi_ref[ii], atol=1e-4)
+                assert state.excitation_energy[j] == refevals[j]
+
+                # TODO Note the reversal
+                #      ... this is a bug in the testdata generator!
+                state2state = State2StateTransition(state, initial=j, final=i)
+                assert_allclose_signfix(state2state.transition_dipole_moment[0],
+                                        fromi_ref[ii], atol=1e-4)

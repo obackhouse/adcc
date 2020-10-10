@@ -21,13 +21,13 @@
 ##
 ## ---------------------------------------------------------------------
 import unittest
+import numpy as np
+
+from adcc.ElectronicTransition import State2StateTransition
+from adcc.testdata.cache import cache
 
 from .misc import expand_test_templates
-from adcc.testdata.cache import cache
-from adcc.ElectronicTransition import State2StateTransition
-
-from pytest import approx, mark
-import numpy as np
+from pytest import approx, skip
 
 # The methods to test
 basemethods = ["adc0", "adc1", "adc2", "adc2x", "adc3"]
@@ -121,10 +121,8 @@ class TestStateDiffDm(unittest.TestCase, Runners):
             assert state.excitation_energy[i] == refevals[i]
 
             dm_ao_a, dm_ao_b = state.state_diffdm[i].to_ao_basis()
-            dm_ao_a = dm_ao_a.to_ndarray()
-            dm_ao_b = dm_ao_b.to_ndarray()
-            assert dm_ao_a == approx(refdens_a[i])
-            assert dm_ao_b == approx(refdens_b[i])
+            assert dm_ao_a.to_ndarray() == approx(refdens_a[i])
+            assert dm_ao_b.to_ndarray()  == approx(refdens_b[i])
 
 
 class TestStateGroundToExcitedTdm(unittest.TestCase, Runners):
@@ -142,37 +140,34 @@ class TestStateGroundToExcitedTdm(unittest.TestCase, Runners):
             # comparing reference and computed
             assert state.excitation_energy[i] == refevals[i]
 
-            tdms = state.transition_dm[i].to_ao_basis()
-            dm_ao_a, dm_ao_b = tdms
-            dm_ao_a = dm_ao_a.to_ndarray()
-            dm_ao_b = dm_ao_b.to_ndarray()
-            assert dm_ao_a == approx(refdens_a[i])
-            assert dm_ao_b == approx(refdens_b[i])
+            dm_ao_a, dm_ao_b = state.transition_dm[i].to_ao_basis()
+            assert dm_ao_a.to_ndarray() == approx(refdens_a[i])
+            assert dm_ao_b.to_ndarray() == approx(refdens_b[i])
 
 
-@mark.xfail
 class TestStateExcitedToExcitedTdm(unittest.TestCase, Runners):
     def base_test(self, system, method, kind):
         method = method.replace("_", "-")
-
+        if "cvs" in method:
+            skip("State-to-state transition dms not yet implemented for CVS.")
         refdata = cache.reference_data[system]
         state = cache.adc_states[system][method][kind]
-
         state_to_state = refdata[method][kind]["state_to_state"]
         refevals = refdata[method][kind]["eigenvalues"]
+
         for i, exci in enumerate(state.excitations):
             # Check that we are talking about the same state when
             # comparing reference and computed
             assert exci.excitation_energy == refevals[i]
-            # TODO: I (MS) have no idea how the densities in the ctx are sorted...
             fromi_ref_a = state_to_state[f"from_{i}"]["state_to_excited_tdm_bb_a"]
             fromi_ref_b = state_to_state[f"from_{i}"]["state_to_excited_tdm_bb_b"]
             for ii, j in enumerate(range(i + 1, state.size)):
-                tdm = State2StateTransition(
-                    state, initial=i, final=j
-                ).transition_dm[0]
-                dm_ao_a, dm_ao_b = tdm.to_ao_basis()
-                dm_ao_a = dm_ao_a.to_ndarray()
-                dm_ao_b = dm_ao_b.to_ndarray()
-                np.testing.assert_allclose(dm_ao_a, fromi_ref_a[ii])
-                np.testing.assert_allclose(dm_ao_b, fromi_ref_b[ii])
+                assert state.excitation_energy[j] == refevals[j]
+
+                # TODO Note the reversal
+                #      ... this is a bug in the testdata generator!
+                state2state = State2StateTransition(state, initial=j, final=i)
+                dm_ao_a, dm_ao_b = state2state.transition_dm[0].to_ao_basis()
+
+                assert dm_ao_a.to_ndarray() == approx(fromi_ref_a[ii], abs=1e-4)
+                assert dm_ao_b.to_ndarray() == approx(fromi_ref_b[ii], abs=1e-4)
