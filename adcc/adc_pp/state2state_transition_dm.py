@@ -73,7 +73,7 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
                 + einsum('ikac,kc,ja->ij', t2, ry1, x1)
             )
             - einsum('ia,ja->ij', rx1, ry1)
-        ).symmetrise()
+        )
     )
     dm[b.vv] = (
         p1_vv + 2.0 * einsum('ijac,ijbc->ab', x2, y2)
@@ -95,7 +95,7 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
                 )
             )
             + einsum("ia,ib->ab", ry1, rx1)
-        ).symmetrise()
+        )
     )
 
     p1_ov = -2.0 * einsum("jb,ijab->ia", x1, y2)
@@ -130,8 +130,7 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
 DISPATCH = {"adc0": s2s_tdm_adc0,
             "adc1": s2s_tdm_adc0,       # same as ADC(0)
             "adc2": s2s_tdm_adc2,
-            "adc2x": s2s_tdm_adc2,
-            "adc3": s2s_tdm_adc2,
+            "adc2x": s2s_tdm_adc2,      # same as ADC(2)
             }
 
 
