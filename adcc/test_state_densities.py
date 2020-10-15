@@ -23,7 +23,7 @@
 import unittest
 import numpy as np
 
-from adcc.ElectronicTransition import State2StateTransition
+from adcc.State2States import State2States, State2StatesLazy
 from adcc.testdata.cache import cache
 
 from .misc import expand_test_templates
@@ -166,7 +166,7 @@ class TestStateExcitedToExcitedTdm(unittest.TestCase, Runners):
 
                 # TODO Note the reversal
                 #      ... this is a bug in the testdata generator!
-                state2state = State2StateTransition(state, initial=j, final=i)
+                state2state = State2States(state, initial=j, final=i)
                 dm_ao_a, dm_ao_b = state2state.transition_dm[0].to_ao_basis()
 
                 assert dm_ao_a.to_ndarray() == approx(fromi_ref_a[ii], abs=1e-4)

@@ -25,7 +25,7 @@ import numpy as np
 
 from numpy.testing import assert_allclose
 
-from adcc import State2StateTransition
+from adcc.State2States import State2States
 from adcc.testdata.cache import cache
 
 from .misc import assert_allclose_signfix
@@ -104,6 +104,6 @@ class TestState2StateTransitionDipoleMoments(unittest.TestCase, Runners):
 
                 # TODO Note the reversal
                 #      ... this is a bug in the testdata generator!
-                state2state = State2StateTransition(state, initial=j, final=i)
+                state2state = State2States(state, initial=j)
                 assert_allclose_signfix(state2state.transition_dipole_moment[0],
                                         fromi_ref[ii], atol=1e-4)

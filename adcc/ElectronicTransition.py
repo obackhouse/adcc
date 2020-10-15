@@ -2,7 +2,7 @@
 ## vi: tabstop=4 shiftwidth=4 softtabstop=4 expandtab
 ## ---------------------------------------------------------------------
 ##
-## Copyright (C) 2019 by the adcc authors
+## Copyright (C) 2020 by the adcc authors
 ##
 ## This file is part of adcc.
 ##
@@ -209,61 +209,3 @@ class ElectronicTransition:
             # Invert x axis
             plt.xlim(plt.xlim()[::-1])
         return plots
-
-
-class State2StateTransition(ElectronicTransition):
-    """
-    Documentation
-    """
-    def __init__(self, parent_state, initial=0, final=None):
-        self.parent_state = parent_state
-        self.reference_state = self.parent_state.reference_state
-        self.ground_state = self.parent_state.ground_state
-        self.matrix = self.parent_state.matrix
-        self.property_method = self.parent_state.property_method
-        self.operators = self.parent_state.operators
-
-        self.initial = initial
-        self.final = final
-
-        self.initial_excitation_vector = \
-            self.parent_state.excitation_vector[self.initial]
-        if self.final is None:
-            other_excitation_energy = np.delete(
-                self.parent_state.excitation_energy.copy(), self.initial
-            )
-        else:
-            other_excitation_energy = \
-                np.array([self.parent_state.excitation_energy[self.final]])
-        self.excitation_energy = other_excitation_energy -\
-            self.parent_state.excitation_energy[self.initial]
-    # TODO: describe?!
-
-    @cached_property
-    @mark_excitation_property(transform_to_ao=True)
-    @timed_member_call(timer="_property_timer")
-    def transition_dm(self):
-        """
-        List of transition density matrices from
-        initial state to final state/s
-        """
-        # TODO: only states above self.initial
-        if self.final is None:
-            return [
-                adc_pp.state2state_transition_dm(self.property_method,
-                                                 self.ground_state,
-                                                 self.initial_excitation_vector,
-                                                 evec,
-                                                 self.matrix.intermediates)
-                for i, evec in enumerate(self.parent_state.excitation_vector)
-                if i != self.initial
-            ]
-        else:
-            final_vec = self.parent_state.excitation_vector[self.final]
-            return [
-                adc_pp.state2state_transition_dm(self.property_method,
-                                                 self.ground_state,
-                                                 self.initial_excitation_vector,
-                                                 final_vec,
-                                                 self.matrix.intermediates)
-            ]
