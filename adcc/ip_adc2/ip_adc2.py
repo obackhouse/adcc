@@ -19,7 +19,6 @@ import libadcc
 # solves for IPs of the correct sign, you are solving for quasiparticle 
 # states of the incorrect sign
 
-#TODO: hole antisymm in ija diagrams, spin symmetry
 #TODO: core-valence separation
 
 AdcBlock = namedtuple('AdcBlock', ['apply', 'diagonal'])
@@ -45,6 +44,7 @@ def block_hhp_hhp_0(hf, mp, intermediates):
     e_i = hf.foo.diagonal()
     e_a = hf.fvv.diagonal()
     e_ija = direct_sum('i,j,a->ija', e_i, e_i, -e_a)
+    e_ija = e_ija.symmetrise(0,1)
     e_ija = intermediates.push('i3', e_ija)
     def apply(ampl):
         v = e_ija * ampl.pphh
@@ -61,6 +61,7 @@ def block_h_hhp_1(hf, mp, intermediates):
 def block_hhp_h_1(hf, mp, intermediates):
     def apply(ampl):
         v = einsum('ijak,k->ija', hf.oovo, ampl.ph) * np.sqrt(0.5)
+        v = v.antisymmetrise(0,1)
         return AmplitudeVector(pphh=-v)
     return AdcBlock(apply, 0)
 
@@ -74,8 +75,8 @@ def diagonal_h_h_2(hf, mp, intermediates):
 def block_h_h_2(hf, mp, intermediates):
     e_i = hf.foo.diagonal()
     t2 = mp.t2(block_getter.oovv)
-    i1_expr = einsum('ikab,jkab->ij', t2, hf.oovv) * 0.25
-    i2_expr = einsum('ikab,jkab->ij', hf.oovv, t2) * 0.25
+    i1_expr = einsum('ikab,jkab->ij', t2, hf.oovv).symmetrise() * 0.25
+    i2_expr = einsum('ikab,jkab->ij', hf.oovv, t2).symmetrise() * 0.25
     i1 = intermediates.push('i1', i1_expr)
     i2 = intermediates.push('i2', i2_expr)
     def apply(ampl):
@@ -132,7 +133,7 @@ class AdcMatrix(AdcMatrix):
 def get_guesses_from_singles(matrix, nroots):
     h_diag = matrix.diagonal('s')
 
-    if nroots >= size:
+    if nroots >= h_diag.size:
         raise ValueError('nroots cannot be greater than number of '
                          'occupied states')
 
@@ -143,7 +144,8 @@ def get_guesses_from_singles(matrix, nroots):
         v = np.zeros(h_diag.shape)
         v[i] = 1.0
         h = Tensor(matrix.mospaces, space='o1')
-        hhp = Tensor(matrix.mospaces, space='o1o1v1')
+        hhp = Tensor(matrix.mospaces, space='o1o1v1', permutations=['ija', '-jia'])
+        hhp = hhp.antisymmetrise(0,1)
         h.set_from_ndarray(v)
         ampl = AmplitudeVector(ph=h, pphh=hhp)
         guesses.append(ampl)
@@ -159,12 +161,23 @@ def get_guesses_from_diag(matrix, nroots):
     guesses = []
 
     for x in arg:
-        v = np.zeros(diag.shape)
-        v[x] = 1.0
+        vi = np.zeros(h_diag.shape)
+        vija = np.zeros(hhp_diag.shape)
+
+        if x < h_diag.size:
+            vi[x] = 1.0
+        else:
+            i, j, a = np.unravel_index(x, hhp_diag.shape)
+            vija[i,j,a] = np.sqrt(0.5)
+            vija[j,i,a] = -np.sqrt(0.5)
+
         h = Tensor(matrix.mospaces, 'o1')
-        hhp = Tensor(matrix.mospaces, 'o1o1v1')
-        h.set_from_ndarray(v[:h_diag.size])
-        hhp.set_from_ndarray(v[h_diag.size:])
+        h.set_from_ndarray(vi)
+
+        hhp = Tensor(matrix.mospaces, 'o1o1v1', permutations=['ija','-jia'])
+        hhp.set_from_ndarray(vija)
+        hhp.antisymmetrise(0,1)
+
         ampl = AmplitudeVector(ph=h, pphh=hhp)
         guesses.append(ampl)
 
