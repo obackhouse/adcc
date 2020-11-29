@@ -31,7 +31,7 @@ def diagonal_h_h_0(hf, mp, intermediates):
 def block_h_h_0(hf, mp, intermediates):
     e_i = hf.foo.diagonal()
     def apply(ampl):
-        v = e_i * ampl.h
+        v = e_i * ampl.ph
         return AmplitudeVector(ph=-v)
     return AdcBlock(apply, diagonal_h_h_0(hf, mp, intermediates))
 
